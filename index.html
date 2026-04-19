@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Study Timetable Creator</title>
+
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f6f4fb;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  background: #fff;
+  margin-top: 30px;
+  padding: 25px;
+  width: 500px;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+h1 {
+  color: #6a4bc3;
+  font-size: 24px;
+}
+
+.days {
+  margin: 15px 0;
+}
+
+.days button {
+  border: none;
+  padding: 6px 12px;
+  margin: 4px;
+  border-radius: 20px;
+  background: #eee;
+  cursor: pointer;
+}
+
+.days .active {
+  background: #7c5ce6;
+  color: white;
+}
+
+input, select {
+  width: 95%;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.row input, .row select {
+  width: 45%;
+}
+
+.generate-btn {
+  background: #dcd3ff;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 5px;
+}
+
+.main-btn {
+  background: linear-gradient(to right, #7c5ce6, #9d7bff);
+  color: white;
+  border: none;
+  padding: 12px;
+  width: 100%;
+  border-radius: 12px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+h2 {
+  color: #6a4bc3;
+  margin-top: 20px;
+}
+
+.card {
+  background: #f1ecff;
+  padding: 12px;
+  border-radius: 10px;
+  margin-top: 10px;
+  text-align: left;
+  border-left: 4px solid #7c5ce6;
+}
+
+.download {
+  margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>📚 Study Timetable Creator</h1>
+
+<div class="days">
+  <button onclick="selectDay(this)">Mon</button>
+  <button onclick="selectDay(this)">Tue</button>
+  <button onclick="selectDay(this)">Wed</button>
+  <button onclick="selectDay(this)">Thu</button>
+  <button onclick="selectDay(this)">Fri</button>
+  <button onclick="selectDay(this)">Sat</button>
+  <button onclick="selectDay(this)">Sun</button>
+</div>
+
+<input type="text" id="subject" placeholder="Subject (e.g., Math)">
+
+<div class="row">
+  <input type="time" id="startTime">
+  <select id="duration">
+    <option value="30">30 min</option>
+    <option value="60">60 min</option>
+    <option value="90">90 min</option>
+  </select>
+</div>
+
+<button class="generate-btn" onclick="generateTime()">Generate Time Slot</button>
+
+<input type="text" id="timeSlot" placeholder="Time Slot" readonly>
+<input type="text" id="task" placeholder="Goal/Task (e.g., Practice Algebra)">
+
+<button class="main-btn" onclick="addEntry()">+ Add to Timetable</button>
+
+<h2>📋 Your Timetable</h2>
+<div id="timetable"></div>
+
+<button class="main-btn download" onclick="download()">Download Weekly Timetable</button>
+
+</div>
+
+<script>
+let selectedDay = "";
+let timetable = [];
+
+function selectDay(btn) {
+  document.querySelectorAll(".days button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  selectedDay = btn.innerText;
+}
+
+function formatTime(h, m) {
+  let ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+function generateTime() {
+  let start = document.getElementById("startTime").value;
+  let duration = parseInt(document.getElementById("duration").value);
+
+  if (!start) return alert("Select start time");
+
+  let [h, m] = start.split(":").map(Number);
+  let endMin = h * 60 + m + duration;
+
+  let endH = Math.floor(endMin / 60);
+  let endM = endMin % 60;
+
+  let startFormatted = formatTime(h, m);
+  let endFormatted = formatTime(endH, endM);
+
+  document.getElementById("timeSlot").value =
+    `${startFormatted} - ${endFormatted}`;
+}
+
+function addEntry() {
+  let subject = document.getElementById("subject").value;
+  let time = document.getElementById("timeSlot").value;
+  let task = document.getElementById("task").value;
+
+  if (!selectedDay || !subject || !time)
+    return alert("Fill all fields");
+
+  timetable.push({ day: selectedDay, subject, time, task });
+  display();
+}
+
+function display() {
+  let div = document.getElementById("timetable");
+  div.innerHTML = "";
+
+  timetable.forEach(e => {
+    div.innerHTML += `
+      <div class="card">
+        <b>📘 ${e.subject}</b><br>
+        Time: ${e.time}<br>
+        Goal: ${e.task || ""}
+      </div>
+    `;
+  });
+}
+
+function download() {
+  let text = "Weekly Timetable\n\n";
+
+  timetable.forEach(e => {
+    text += `${e.day} - ${e.subject} (${e.time}) - ${e.task}\n`;
+  });
+
+  let blob = new Blob([text], { type: "text/plain" });
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "timetable.txt";
+  a.click();
+}
+</script>
+
+</body>
+</html>
